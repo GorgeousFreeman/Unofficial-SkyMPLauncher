@@ -1,0 +1,17 @@
+C:\SkyrimMPLauncher\WindowsFormsApp1\bin\x86\Debug\SkyMpLauncher.exe.config
+C:\SkyrimMPLauncher\WindowsFormsApp1\bin\x86\Debug\SkyMpLauncher.exe
+C:\SkyrimMPLauncher\WindowsFormsApp1\bin\x86\Debug\SkyMpLauncher.pdb
+C:\SkyrimMPLauncher\WindowsFormsApp1\bin\x86\Debug\DotNetZip.dll
+C:\SkyrimMPLauncher\WindowsFormsApp1\bin\x86\Debug\DotNetZip.pdb
+C:\SkyrimMPLauncher\WindowsFormsApp1\bin\x86\Debug\DotNetZip.xml
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\WindowsFormsApp1.csproj.AssemblyReference.cache
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\WindowsFormsApp1.csproj.SuggestedBindingRedirects.cache
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\SkyMpLauncher.Form1.resources
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\SkyMpLauncher.Form2.resources
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\SkyMpLauncher.Form3.resources
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\SkyMpLauncher.Properties.Resources.resources
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\WindowsFormsApp1.csproj.GenerateResource.cache
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\WindowsFormsApp1.csproj.CoreCompileInputs.cache
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\WindowsFormsApp1.csproj.CopyComplete
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\SkyMpLauncher.exe
+C:\SkyrimMPLauncher\WindowsFormsApp1\obj\x86\Debug\SkyMpLauncher.pdb
