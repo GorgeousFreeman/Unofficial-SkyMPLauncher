@@ -56,6 +56,8 @@
             this.skyMPToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SettingProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.GraphiscResolutionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.NiceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.batAnimToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
@@ -73,8 +75,6 @@
             this.button14 = new System.Windows.Forms.Button();
             this.button15 = new System.Windows.Forms.Button();
             this.button17 = new System.Windows.Forms.Button();
-            this.NiceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.batAnimToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -202,9 +202,9 @@
             // 
             this.label1.BackColor = System.Drawing.Color.Transparent;
             this.label1.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.label1.Location = new System.Drawing.Point(305, 379);
+            this.label1.Location = new System.Drawing.Point(139, 376);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(179, 13);
+            this.label1.Size = new System.Drawing.Size(501, 16);
             this.label1.TabIndex = 12;
             this.label1.Text = "Выберите профиль:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -234,7 +234,7 @@
             // 
             this.progressBar1.Location = new System.Drawing.Point(646, 353);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(106, 20);
+            this.progressBar1.Size = new System.Drawing.Size(106, 15);
             this.progressBar1.TabIndex = 16;
             this.progressBar1.Visible = false;
             // 
@@ -309,7 +309,7 @@
             this.skyrimToolStripMenuItem.Name = "skyrimToolStripMenuItem";
             this.skyrimToolStripMenuItem.Size = new System.Drawing.Size(110, 22);
             this.skyrimToolStripMenuItem.Text = "Skyrim";
-            this.skyrimToolStripMenuItem.Click += new System.EventHandler(this.SkyrimToolStripMenuItem_Click);
+            this.skyrimToolStripMenuItem.Click += new System.EventHandler(this.skyrimToolStripMenuItem_Click);
             // 
             // skyMPToolStripMenuItem
             // 
@@ -331,6 +331,22 @@
             this.GraphiscResolutionToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
             this.GraphiscResolutionToolStripMenuItem.Text = "Графика и разрешение";
             this.GraphiscResolutionToolStripMenuItem.Click += new System.EventHandler(this.GraphiscResolutionToolStripMenuItem_Click);
+            // 
+            // NiceToolStripMenuItem
+            // 
+            this.NiceToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.batAnimToolStripMenuItem});
+            this.NiceToolStripMenuItem.Name = "NiceToolStripMenuItem";
+            this.NiceToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            this.NiceToolStripMenuItem.Text = "Полезное";
+            // 
+            // batAnimToolStripMenuItem
+            // 
+            this.batAnimToolStripMenuItem.CheckOnClick = true;
+            this.batAnimToolStripMenuItem.Name = "batAnimToolStripMenuItem";
+            this.batAnimToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.batAnimToolStripMenuItem.Text = "Bat Анимаций";
+            this.batAnimToolStripMenuItem.Click += new System.EventHandler(this.batAnimToolStripMenuItem_Click);
             // 
             // label5
             // 
@@ -543,22 +559,6 @@
             this.button17.TabIndex = 38;
             this.button17.UseVisualStyleBackColor = false;
             this.button17.Click += new System.EventHandler(this.button17_Click);
-            // 
-            // NiceToolStripMenuItem
-            // 
-            this.NiceToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.batAnimToolStripMenuItem});
-            this.NiceToolStripMenuItem.Name = "NiceToolStripMenuItem";
-            this.NiceToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
-            this.NiceToolStripMenuItem.Text = "Полезное";
-            // 
-            // batAnimToolStripMenuItem
-            // 
-            this.batAnimToolStripMenuItem.CheckOnClick = true;
-            this.batAnimToolStripMenuItem.Name = "batAnimToolStripMenuItem";
-            this.batAnimToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.batAnimToolStripMenuItem.Text = "Bat Анимаций";
-            this.batAnimToolStripMenuItem.Click += new System.EventHandler(this.batAnimToolStripMenuItem_Click);
             // 
             // Form1
             // 
