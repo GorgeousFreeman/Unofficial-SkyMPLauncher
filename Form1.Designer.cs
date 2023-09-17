@@ -58,6 +58,7 @@
             this.GraphiscResolutionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.NiceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.batAnimToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.modManagerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
@@ -256,7 +257,8 @@
             this.checkCashToolStripMenuItem,
             this.SettingProfileToolStripMenuItem,
             this.GraphiscResolutionToolStripMenuItem,
-            this.NiceToolStripMenuItem});
+            this.NiceToolStripMenuItem,
+            this.modManagerToolStripMenuItem});
             this.settingToolStripMenuItem.Name = "settingToolStripMenuItem";
             this.settingToolStripMenuItem.Size = new System.Drawing.Size(79, 20);
             this.settingToolStripMenuItem.Text = "Настройки";
@@ -307,14 +309,13 @@
             // skyrimToolStripMenuItem
             // 
             this.skyrimToolStripMenuItem.Name = "skyrimToolStripMenuItem";
-            this.skyrimToolStripMenuItem.Size = new System.Drawing.Size(110, 22);
+            this.skyrimToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.skyrimToolStripMenuItem.Text = "Skyrim";
-            this.skyrimToolStripMenuItem.Click += new System.EventHandler(this.skyrimToolStripMenuItem_Click);
             // 
             // skyMPToolStripMenuItem
             // 
             this.skyMPToolStripMenuItem.Name = "skyMPToolStripMenuItem";
-            this.skyMPToolStripMenuItem.Size = new System.Drawing.Size(110, 22);
+            this.skyMPToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.skyMPToolStripMenuItem.Text = "SkyMP";
             this.skyMPToolStripMenuItem.Click += new System.EventHandler(this.SkyMPToolStripMenuItem_Click);
             // 
@@ -347,6 +348,13 @@
             this.batAnimToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.batAnimToolStripMenuItem.Text = "Bat Анимаций";
             this.batAnimToolStripMenuItem.Click += new System.EventHandler(this.batAnimToolStripMenuItem_Click);
+            // 
+            // modManagerToolStripMenuItem
+            // 
+            this.modManagerToolStripMenuItem.Name = "modManagerToolStripMenuItem";
+            this.modManagerToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            this.modManagerToolStripMenuItem.Text = "Мод менеджер";
+            this.modManagerToolStripMenuItem.Click += new System.EventHandler(this.modManagerToolStripMenuItem_Click);
             // 
             // label5
             // 
@@ -666,6 +674,7 @@
         private System.Windows.Forms.Button button17;
         private System.Windows.Forms.ToolStripMenuItem NiceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem batAnimToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem modManagerToolStripMenuItem;
     }
 }
 

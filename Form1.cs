@@ -14,13 +14,11 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
-using MonoTorrent;
-using MonoTorrent.Client;
-using MonoTorrent.Client.PiecePicking;
 using Timer = System.Windows.Forms.Timer;
 using Ionic.Zip;
+using System.Net.Http;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace SkyMpLauncher
 {
@@ -34,7 +32,7 @@ namespace SkyMpLauncher
 
             InitializeComponent();
 
-            if(File.Exists("Setting.ini") == false)
+            if (File.Exists("Setting.ini") == false)
             {
                 if (MessageBox.Show("Вы запустили этот лаунчер в первый раз. Для нормальной работы лаунчера нужно его разместить в удобную вам папку или же расположить его рядом с Skyrim.exe (корень игры). Как только вы всё правильно сделали, нажмите Да и мы начнем адаптацию.", "Предупреждение!", MessageBoxButtons.YesNo) == DialogResult.No)
                 {
@@ -62,21 +60,6 @@ namespace SkyMpLauncher
 
             label6.Visible = false;
 
-            if (File.Exists("DotNetZip.dll") == false || File.Exists("Mono.Nat.dll") == false || File.Exists("MonoTorrent.dll") == false || File.Exists("ReusableTasks.dll") == false || File.Exists("DotNetZip.dll") == false)
-            {
-                WebClient dotNetZipDownload1 = new WebClient();
-                dotNetZipDownload1.DownloadFileAsync(new Uri("https://www.dropbox.com/scl/fi/okmxftedc41qp8rnpvlcq/DotNetZip.dll?rlkey=xcxf00gqguq2k098hjrgwn95e&dl=1"), "DotNetZip.dll");
-
-                WebClient dotNetZipDownload2 = new WebClient();
-                dotNetZipDownload2.DownloadFileAsync(new Uri("https://www.dropbox.com/scl/fi/y5wmgoh24a7knyfufwit3/Mono.Nat.dll?rlkey=bz3q4pufcv0av44pi802b4uno&dl=1"), "Mono.Nat.dll");
-
-                WebClient dotNetZipDownload3 = new WebClient();
-                dotNetZipDownload3.DownloadFileAsync(new Uri("https://www.dropbox.com/scl/fi/s4f5esm19b5g4k5o4z26v/MonoTorrent.dll?rlkey=g4h3xbajj79mugffns3lqf7tr&dl=1"), "MonoTorrent.dll");
-
-                WebClient dotNetZipDownload4 = new WebClient();
-                dotNetZipDownload4.DownloadFileAsync(new Uri("https://www.dropbox.com/scl/fi/42wq90uqeemu10z9fs7od/ReusableTasks.dll?rlkey=nadiqnfcgti16wk29h15agsso&dl=1"), "ReusableTasks.dll");
-            }
-
             if (File.Exists("AnimList-1.txt") == true)
             {
                 batAnimToolStripMenuItem.Checked = true;
@@ -86,6 +69,11 @@ namespace SkyMpLauncher
                 batAnimToolStripMenuItem.Checked = false;
             }
 
+            if (File.Exists("DotNetZip.dll") == false)
+            {
+                WebClient dotNetZipDownload1 = new WebClient();
+                dotNetZipDownload1.DownloadFileAsync(new Uri("https://www.dropbox.com/scl/fi/okmxftedc41qp8rnpvlcq/DotNetZip.dll?rlkey=xcxf00gqguq2k098hjrgwn95e&dl=1"), "DotNetZip.dll");
+            }
 
             if (File.Exists(skyrimSE) == true && File.Exists(skyMP) == true && File.Exists("Setting") == false)
             {
@@ -143,8 +131,6 @@ namespace SkyMpLauncher
                     {
                         label4.Text = "SkyMP установлен";
                         button1.Enabled = false;
-
-                        TorrentCheckeds();
                     }
                     else
                     {
@@ -155,6 +141,7 @@ namespace SkyMpLauncher
                         checkCashToolStripMenuItem.Enabled = false;
                         profileEnableToolStripMenuItem.Enabled = false;
                         GraphiscResolutionToolStripMenuItem.Enabled = false;
+                        modManagerToolStripMenuItem.Enabled = false;
                     }
                 }
                 else
@@ -168,6 +155,7 @@ namespace SkyMpLauncher
                     checkCashToolStripMenuItem.Enabled = false;
                     profileEnableToolStripMenuItem.Enabled = false;
                     GraphiscResolutionToolStripMenuItem.Enabled = false;
+                    modManagerToolStripMenuItem.Enabled = false;
                 }
 
             }
@@ -181,9 +169,11 @@ namespace SkyMpLauncher
                 checkCashToolStripMenuItem.Enabled = false;
                 profileEnableToolStripMenuItem.Enabled = false;
                 GraphiscResolutionToolStripMenuItem.Enabled = false;
+                modManagerToolStripMenuItem.Enabled = false;
             }
 
             Start.Visible = true;
+            skyMPUpdate();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -215,16 +205,13 @@ namespace SkyMpLauncher
                     if (File.Exists(skyMP) != true)
                     {
                         //Отсутствует SkyMP
-                        TorrentDownloadSkyMP();
+                        skyMPDownload();
                     }
                 }
                 else
                 {
                     //Некорректная версия Skyrim
-                    TorrentDownloadClient();
-
-                    var Setting = new IniFile("Setting.ini");
-                    Setting.Write("ClientDownload", "On", "Pirate");
+                    clientDownload();
                 }
             }
             else
@@ -233,10 +220,7 @@ namespace SkyMpLauncher
 
                 if (MessageBox.Show("Будет запущен скачивание Skyrim, но хочу предупредить! Будет установлена ПИРАТКА, если вы же не хотите это делать, будьте добры, купите игру в Steam (если есть возможность) или же приобрести игру на сторонних магазинах! Если вам всё равно, просто нажмите ДА и начнется процесс нелегального скачивания.", "Предупреждение!", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    TorrentDownloadClient();
-
-                    var Setting = new IniFile("Setting.ini");
-                    Setting.Write("ClientDownload", "On", "Pirate");
+                    clientDownload();
                 }
             }
         }
@@ -1375,36 +1359,28 @@ namespace SkyMpLauncher
             checkBox10.Visible = true;
         }
 
-        int ServerFile;
-
         private void playerPingCheck()
         {
-            string Server = @"https://sweetpie.nic11.xyz/api/servers";
             WebClient web7Zdll = new WebClient();
-            web7Zdll.DownloadFile(new Uri(Server), "Server");
-
-            string ServerCheck = File.ReadLines("Server").Skip(0).First();
+            string readver = web7Zdll.DownloadString(new Uri("https://sweetpie.nic11.xyz/api/servers"));
 
             var ping = new Ping();
             PingReply res = ping.Send("sweetpie.nic11.xyz");
 
-            string autchDataNoLoadProfile7 = Regex.Match(ServerCheck, @"(?<=""online"":)(.*)(?=},{""ip"":""51.158.236.73"")").ToString();
+            string autchDataNoLoadProfile7 = Regex.Match(readver, @"(?<=""online"":)(.*)(?=},{""ip"":""51.158.236.73"")").ToString();
 
             label7.Text = "Онлайн: " + autchDataNoLoadProfile7 + " Ping: " + res.RoundtripTime;
         }
 
         private void playerPingCheck(object sender, EventArgs e)
         {
-            string Server = @"https://sweetpie.nic11.xyz/api/servers";
             WebClient web7Zdll = new WebClient();
-            web7Zdll.DownloadFile(new Uri(Server), "Server");
-
-            string ServerCheck = File.ReadLines("Server").Skip(0).First();
+            string readver = web7Zdll.DownloadString(new Uri("https://sweetpie.nic11.xyz/api/servers"));
 
             var ping = new Ping();
             PingReply res = ping.Send("sweetpie.nic11.xyz");
 
-            string autchDataNoLoadProfile7 = Regex.Match(ServerCheck, @"(?<=""online"":)(.*)(?=},{""ip"":""51.158.236.73"")").ToString();
+            string autchDataNoLoadProfile7 = Regex.Match(readver, @"(?<=""online"":)(.*)(?=},{""ip"":""51.158.236.73"")").ToString();
 
             label7.Text = "Онлайн: " + autchDataNoLoadProfile7 + " Ping: " + res.RoundtripTime;
         }
@@ -1424,10 +1400,7 @@ namespace SkyMpLauncher
 
                 if (MessageBox.Show("Вы удалили SkyMP с помощью Деинсталятора?", "Удаление SkyMP", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    File.Delete("cache\\fastresume\\6CEF0C07E0FE31C31328BC78791853F4108C1105.fresume");
-                    File.Delete("cache\\metadata\\6CEF0C07E0FE31C31328BC78791853F4108C1105.torrent");
-
-                    TorrentDownloadSkyMP();
+                    skyMPDownload();
                 }
             }
         }
@@ -1450,9 +1423,44 @@ namespace SkyMpLauncher
                 {
                     if (MessageBox.Show("Доступная новая версия. Обновить?", "", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        launcherDownload.DownloadFile("https://www.dropbox.com/scl/fi/s50qw537lepmmkh8i1xji/SkyMpLauncher.exe?rlkey=2getcx0kzt0dhx6oosfseq92q&dl=1", "SkyMpLauncherNew.exe");
+                        launcherDownload.DownloadFile("https://www.dropbox.com/scl/fi/i3wv671a8xtsohy22ed55/Update.txt?rlkey=fj8k8nn0g3vo4bzadbo9gn9u4&dl=1", "SkyMpLauncherNew.exe");
 
                         Cmd($"taskill /f /im \"{exename}\" && timeout /t 1 && del \"{exepath}\" && ren SkyMpLauncherNew.exe \"{exename}\" && \"{exepath}\"");
+                    }
+                }
+            }
+        }
+
+        private void skyMPUpdate()
+        {
+            string curver = "0.2";
+
+            using (WebClient launcherDownload = new WebClient())
+            {
+                string readver = launcherDownload.DownloadString(new Uri("https://www.dropbox.com/s/m3moshhmgmsxuw1/Version.txt?dl=1"));
+
+                if (Convert.ToDouble(curver, CultureInfo.InvariantCulture) == Convert.ToDouble(readver, CultureInfo.InvariantCulture))
+                {
+                    //Последняя версия
+                }
+                else
+                {
+                    if (MessageBox.Show("Доступная новая версия SkyMP!", "", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        File.Delete("SkyMP.z01");
+                        File.Delete("SkyMP.z02");
+                        File.Delete("SkyMP.z03");
+                        File.Delete("SkyMP.z04");
+                        File.Delete("SkyMP.zip");
+
+                        Thread.Sleep(3000);
+
+                        skyMPDownload();
+                    }
+                    else
+                    {
+                        label4.ForeColor = Color.Red;
+                        label4.Text = "Старая версия SkyMP!";
                     }
                 }
             }
@@ -2255,12 +2263,28 @@ namespace SkyMpLauncher
 
                 Thread.Sleep(5000);
 
+                if (File.Exists("ProfileSave\\1") == true)
+                {
+                    for(int i = 1; i <= 9; i++)
+                    {
+                        CopyDirectory("Anim", "ProfileSave\\" + i, true);
+                    }
+                }
+
                 File.Delete("Anim.zip");
             }
             else if (batAnimToolStripMenuItem.Checked == false)
             {
                 File.Delete("AnimList-1.txt");
                 File.Delete("AnimList-2.txt");
+
+                if (File.Exists("ProfileSave\\1") == true)
+                {
+                    for (int i = 1; i <= 9; i++)
+                    {
+                        Directory.Delete("ProfileSave\\" + i + "\\Anim", true);
+                    }
+                }
 
                 string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "anim");
 
@@ -2281,191 +2305,711 @@ namespace SkyMpLauncher
 
         }
 
-        /// ////////////////////////////////////////////////////////////////////////////////////////
-
-        private TorrentManager torrentManagerClient;
-        private TorrentManager torrentManagerSkyMP;
-
-        private async void TorrentDownloadClient()
+        static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)
         {
-            if (File.Exists("Skyrim.exe") == false)
+            // Get information about the source directory
+            var dir = new DirectoryInfo(sourceDir);
+
+            // Check if the source directory exists
+            if (!dir.Exists)
+                throw new DirectoryNotFoundException($"Source directory not found: {dir.FullName}");
+
+            // Cache directories before we start copying
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // Create the destination directory
+            Directory.CreateDirectory(destinationDir);
+
+            // Get the files in the source directory and copy to the destination directory
+            foreach (FileInfo file in dir.GetFiles())
             {
-                progressBar1.Enabled = true;
-                button1.Enabled = false;
-                progressBar1.Visible = true;
-                label4.Visible = false;
-                Start.Enabled = false;
-
-                MagnetLink magnetLink1 = MagnetLink.Parse("magnet:?xt=urn:btih:b70f00172b021159d7294139326c12dfa3724799&dn=Data");
-
-                EngineSettings engineSettings = new EngineSettings();
-                ClientEngine engine = new ClientEngine(engineSettings);
-                torrentManagerClient = await engine.AddAsync(magnetLink1, "");
-                torrentManagerClient.PieceHashed += TorrentManager_PieceHashedClient;
-                torrentManagerClient.StartAsync();
+                string targetFilePath = Path.Combine(destinationDir, file.Name);
+                file.CopyTo(targetFilePath);
             }
-            else
+
+            // If recursive and copying subdirectories, recursively call this method
+            if (recursive)
             {
-                TorrentDownloadSkyMP();
+                foreach (DirectoryInfo subDir in dirs)
+                {
+                    string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+                    CopyDirectory(subDir.FullName, newDestinationDir, true);
+                }
             }
         }
 
-        private async void TorrentDownloadSkyMP()
+        /// ////////////////////////////////////////////////////////////////////////////////////////
+
+        int ClientFIle;
+
+        private void clientDownload()
         {
             progressBar1.Enabled = true;
             button1.Enabled = false;
             progressBar1.Visible = true;
             label4.Visible = false;
-            Start.Enabled = false;
 
-            MagnetLink magnetLink2 = MagnetLink.Parse("magnet:?xt=urn:btih:6cef0c07e0fe31c31328bc78791853f4108c1105&dn=Data");
+            Directory.CreateDirectory("Data\\ShaderCache");
+            Directory.CreateDirectory("Data\\Video");
+            Directory.CreateDirectory("Skyrim");
+            Directory.CreateDirectory("ProfileSave\\ProfileName");
 
-            EngineSettings engineSettings = new EngineSettings();
-            ClientEngine engine = new ClientEngine(engineSettings);
-            torrentManagerSkyMP = await engine.AddAsync(magnetLink2, "");
-            torrentManagerSkyMP.PieceHashed += TorrentManager_PieceHashedSkyMP;
-            torrentManagerSkyMP.StartAsync();
-        }
+            Dictionary<Uri, string> dict = new Dictionary<Uri, string>();
 
-        private void TorrentManager_PieceHashedClient(object sender, PieceHashedEventArgs e)
-        {
-            button1.Text = "Качается Skyrim Special Edition\n" + (int)torrentManagerClient.Progress + "%";
-
-            progressBar1.Value = (int)(torrentManagerClient.Progress);
-
-            if (e.TorrentManager.Complete)
+            if (File.Exists("Data\\Video\\BGS_Logo.bik") != true)
             {
-                torrentManagerClient.StopAsync();
-
-                Dictionary<Uri, string> dict1 = new Dictionary<Uri, string>();
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/fye9bexbpqo2hda3i8765/bink2w64.dll?rlkey=3a72bm9s9bljirfcdl6n254zt&dl=1"), "bink2w64.dll");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/kd10jv65y41ixegwbrowb/High.ini?rlkey=mr2c81b9847jyo5w3lqke3xgy&dl=1"), "High.ini");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/lgnotpz1seqxo4bs7d173/installscript.vdf?rlkey=oegybtsfgbn7bgq8jmp73mnb1&dl=1"), "installscript.vdf");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/daijwyicw7yzjaql9p5u2/Low.ini?rlkey=h0wxzwtwpmxpizptbe3ws8he1&dl=1"), "Low.ini");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/91zrqqy3wtw2shvfiejgx/Medium.ini?rlkey=z8cpybclpbuene6j3s51z6mge&dl=1"), "Medium.ini");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/zjd948u9scsbg95cdhvsd/Skyrim_Default.ini?rlkey=3zh9p9rpgge7l8dl1quwikn78&dl=1"), "Skyrim_Default.ini");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/01lpiph48631rkt6dqlky/Skyrim.ccc?rlkey=9xgkwluh9oidbodwrvf41hfvv&dl=1"), "Skyrim.ccc");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/dkge1g0c32elnaky89d9b/SkyrimSELauncher.exe?rlkey=o8gcvlo459vj9n4r5la22yo2t&dl=1"), "SkyrimSELauncher.exe");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/6t2cw5w2btwrm2ndla0q9/steam_api64.cdx?rlkey=8zdf3eso4j0id1cbbpyh6bi14&dl=1"), "steam_api64.cdx");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/wrkabvemg7lqdysgv9hz9/steam_api64.dll?rlkey=ynvuqdjob8pbwwfqmmxroi0sp&dl=1"), "steam_api64.dll");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/omxu1mgprswim25x0jxls/steam_emu.ini?rlkey=bdj1rczmq7y90uy2bx1i21dqy&dl=1"), "steam_emu.ini");
-
-                dict1.Add(new Uri("https://www.dropbox.com/scl/fi/snuy0wlex0zk1eunywjem/SkyrimSE.exe?rlkey=su7mmawjcxaenbezwf6kzcdi4&dl=1"), "SkyrimSE.exe");
-
-                DownloadManyFilesClient(dict1);
-
-                progressBar1.Enabled = false;
-                button1.Enabled = true;
-                progressBar1.Visible = false;
-                label4.Visible = true;
-
-                if (File.Exists("CombatSettings.esp") == false && File.Exists("SweetPie.esp") == false)
-                {
-                    TorrentDownloadSkyMP();
-                }
-                else
-                {
-                    Start.Enabled = true;
-                    label4.Text = "SkyMP установлен";
-                }
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/ZxLA11uUdSQQtQ"), "Data\\Video\\BGS_Logo.bik");
             }
-        }
 
-        private void TorrentManager_PieceHashedSkyMP(object sender, PieceHashedEventArgs e)
-        {
-            button1.Text = "Качается SkyMP\n" + (int)torrentManagerSkyMP.Progress + "%";
-
-            progressBar1.Value = (int)(torrentManagerSkyMP.Progress);
-
-            if (e.TorrentManager.Complete)
+            if (File.Exists("Data\\ccBGSSSE001-Fish.bsa") == true && new FileInfo("Data\\ccBGSSSE001-Fish.bsa").Length != 377673669)
             {
-                Dictionary<Uri, string> dict2 = new Dictionary<Uri, string>();
 
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/j6hj8nl21hsidh928ag4w/d3dx9_42.dll?rlkey=5gjypkx3oscbf5y8yv9c28p0m&dl=1"), "d3dx9_42.dll");
-
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/859nf8ucbdx11vqawoyx6/skse64_1_6_640.dll?rlkey=xpa54czyml8z2vqos1xdaknir&dl=1"), "skse64_1_6_640.dll");
-
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/6oy95pmryo5ftk7q6wdr7/skse64_loader.exe?rlkey=fpge8ilc2n7ibyyh4lg7n7puz&dl=1"), "skse64_loader.exe");
-
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/vvbuoaaar1zp4m0mvnvja/skse64_readme.txt?rlkey=rpkke6pp3ui13ewk2sj4rzx4t&dl=1"), "skse64_readme.txt");
-
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/varyjmrfla9i3koujqprt/skse64_whatsnew.txt?rlkey=yuo227bbzofgpgtcyc7arxead&dl=1"), "skse64_whatsnew.txt");
-
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/0l5q39sdnena69q5y5h2i/tbb.dll?rlkey=0020r5qa7yxp5gnzkg13yh3ms&dl=1"), "tbb.dll");
-
-                dict2.Add(new Uri("https://www.dropbox.com/scl/fi/l0f658970gymrbqu48fes/tbbmalloc.dll?rlkey=13ls2csni1to2r9tq07sgewex&dl=1"), "tbbmalloc.dll");
-
-                DownloadManyFilesSkyMP(dict2);
-
-                torrentManagerSkyMP.StopAsync();
-
-                progressBar1.Enabled = false;
-                button1.Enabled = false;
-                progressBar1.Visible = false;
-
-                label4.Visible = true;
-                Start.Enabled = true;
-                label4.Text = "SkyMP установлен";
-
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/xhXbkfdgcQKwtg"), "Data\\ccBGSSSE001-Fish.bsa");
             }
+            else if (File.Exists("Data\\ccBGSSSE001-Fish.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/xhXbkfdgcQKwtg"), "Data\\ccBGSSSE001-Fish.bsa");
+            }
+
+            if (File.Exists("Data\\ccBGSSSE001-Fish.esm") == true && new FileInfo("Data\\ccBGSSSE001-Fish.esm").Length != 1425350)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/VEkXgDAZyD17Dw"), "Data\\ccBGSSSE001-Fish.esm");
+            }
+            else if (File.Exists("Data\\ccBGSSSE001-Fish.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/VEkXgDAZyD17Dw"), "Data\\ccBGSSSE001-Fish.esm");
+            }
+
+            if (File.Exists("Data\\ccBGSSSE025-AdvDSGS.bsa") == true && new FileInfo("Data\\ccBGSSSE025-AdvDSGS.bsa").Length != 1092876206)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/64z055cvr_sADg"), "Data\\ccBGSSSE025-AdvDSGS.bsa");
+            }
+            else if (File.Exists("Data\\ccBGSSSE025-AdvDSGS.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/64z055cvr_sADg"), "Data\\ccBGSSSE025-AdvDSGS.bsa");
+            }
+
+            if (File.Exists("Data\\ccBGSSSE025-AdvDSGS.esm") == true && new FileInfo("Data\\ccBGSSSE025-AdvDSGS.esm").Length != 812763)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/RTDdF49Rot04xQ"), "Data\\ccBGSSSE025-AdvDSGS.esm");
+            }
+            else if (File.Exists("Data\\ccBGSSSE025-AdvDSGS.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/RTDdF49Rot04xQ"), "Data\\ccBGSSSE025-AdvDSGS.esm");
+            }
+
+            if (File.Exists("Data\\ccBGSSSE037-Curios.bsa") == true && new FileInfo("Data\\ccBGSSSE037-Curios.bsa").Length != 111740475)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/PBp_RIp3WDtSzA"), "Data\\ccBGSSSE037-Curios.bsa");
+            }
+            else if (File.Exists("Data\\ccBGSSSE037-Curios.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/PBp_RIp3WDtSzA"), "Data\\ccBGSSSE037-Curios.bsa");
+            }
+
+            if (File.Exists("Data\\ccBGSSSE037-Curios.esl") == true && new FileInfo("Data\\ccBGSSSE037-Curios.esl").Length != 37476)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/h__6NGFUYVh-qw"), "Data\\ccBGSSSE037-Curios.esl");
+            }
+            else if (File.Exists("Data\\ccBGSSSE037-Curios.esl") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/h__6NGFUYVh-qw"), "Data\\ccBGSSSE037-Curios.esl");
+            }
+
+            if (File.Exists("Data\\ccQDRSSE001-SurvivalMode.bsa") == true && new FileInfo("Data\\ccQDRSSE001-SurvivalMode.bsa").Length != 12835601)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/Xib62GX_UWcKjw"), "Data\\ccQDRSSE001-SurvivalMode.bsa");
+            }
+            else if (File.Exists("Data\\ccQDRSSE001-SurvivalMode.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/Xib62GX_UWcKjw"), "Data\\ccQDRSSE001-SurvivalMode.bsa");
+            }
+
+            if (File.Exists("Data\\ccQDRSSE001-SurvivalMode.esl") == true && new FileInfo("Data\\ccQDRSSE001-SurvivalMode.esl").Length != 240724)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/E1EtSxXNiw2sWw"), "Data\\ccQDRSSE001-SurvivalMode.esl");
+            }
+            else if (File.Exists("Data\\ccQDRSSE001-SurvivalMode.esl") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/E1EtSxXNiw2sWw"), "Data\\ccQDRSSE001-SurvivalMode.esl");
+            }
+
+            if (File.Exists("Data\\Dawnguard.esm") == true && new FileInfo("Data\\Dawnguard.esm").Length != 25884627)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/U26FoLGKcHOn9w"), "Data\\Dawnguard.esm");
+            }
+            else if (File.Exists("Data\\Dawnguard.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/U26FoLGKcHOn9w"), "Data\\Dawnguard.esm");
+            }
+
+            if (File.Exists("Data\\Dragonborn.esm") == true && new FileInfo("Data\\Dragonborn.esm").Length != 64663944)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/tc3nxmatsHBlRA"), "Data\\Dragonborn.esm");
+            }
+            else if (File.Exists("Data\\Dragonborn.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/tc3nxmatsHBlRA"), "Data\\Dragonborn.esm");
+            }
+
+            if (File.Exists("Data\\HearthFires.esm") == true && new FileInfo("Data\\HearthFires.esm").Length != 3977660)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/OUy1sG_o0v4JLw"), "Data\\HearthFires.esm");
+            }
+            else if (File.Exists("Data\\HearthFires.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/OUy1sG_o0v4JLw"), "Data\\HearthFires.esm");
+            }
+
+            if (File.Exists("Data\\Skyrim - Animations.bsa") == true && new FileInfo("Data\\Skyrim - Animations.bsa").Length != 65101236)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9x0pDK_qj3taxQ"), "Data\\Skyrim - Animations.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Animations.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9x0pDK_qj3taxQ"), "Data\\Skyrim - Animations.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Interface.bsa") == true && new FileInfo("Data\\Skyrim - Interface.bsa").Length != 105751175)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/0uNLESdO8zgMXQ"), "Data\\Skyrim - Interface.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Interface.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/0uNLESdO8zgMXQ"), "Data\\Skyrim - Interface.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Meshes0.bsa") == true && new FileInfo("Data\\Skyrim - Meshes0.bsa").Length != 1153090124)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/1eNANEz6IckrdQ"), "Data\\Skyrim - Meshes0.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Meshes0.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/1eNANEz6IckrdQ"), "Data\\Skyrim - Meshes0.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Meshes1.bsa") == true && new FileInfo("Data\\Skyrim - Meshes1.bsa").Length != 378853391)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/yU3WjNd4_Ohj_g"), "Data\\Skyrim - Meshes1.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Meshes1.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/yU3WjNd4_Ohj_g"), "Data\\Skyrim - Meshes1.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Misc.bsa") == true && new FileInfo("Data\\Skyrim - Misc.bsa").Length != 204987429)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/QsK3rYxsKUUVyA"), "Data\\Skyrim - Misc.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Misc.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/QsK3rYxsKUUVyA"), "Data\\Skyrim - Misc.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Shaders.bsa") == true && new FileInfo("Data\\Skyrim - Shaders.bsa").Length != 67308970)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/B4OEeEbIJ5gwCg"), "Data\\Skyrim - Shaders.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Shaders.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/B4OEeEbIJ5gwCg"), "Data\\Skyrim - Shaders.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Sounds.bsa") == true && new FileInfo("Data\\Skyrim - Sounds.bsa").Length != 1538656059)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/1elFgRkcSoW8ow"), "Data\\Skyrim - Sounds.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Sounds.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/1elFgRkcSoW8ow"), "Data\\Skyrim - Sounds.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures0.bsa") == true && new FileInfo("Data\\Skyrim - Textures0.bsa").Length != 652401558)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/p-yOffuzQWV6IQ"), "Data\\Skyrim - Textures0.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures0.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/p-yOffuzQWV6IQ"), "Data\\Skyrim - Textures0.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures1.bsa") == true && new FileInfo("Data\\Skyrim - Textures1.bsa").Length != 1511504224)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/qWyskTixrvZzhA"), "Data\\Skyrim - Textures1.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures1.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/qWyskTixrvZzhA"), "Data\\Skyrim - Textures1.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures2.bsa") == true && new FileInfo("Data\\Skyrim - Textures2.bsa").Length != 1346030841)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/smEZET9xv32G1Q"), "Data\\Skyrim - Textures2.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures2.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/smEZET9xv32G1Q"), "Data\\Skyrim - Textures2.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures3.bsa") == true && new FileInfo("Data\\Skyrim - Textures3.bsa").Length != 1401677791)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/sb82Yfdx9e1-cg"), "Data\\Skyrim - Textures3.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures3.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/sb82Yfdx9e1-cg"), "Data\\Skyrim - Textures3.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures4.bsa") == true && new FileInfo("Data\\Skyrim - Textures4.bsa").Length != 1265325033)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/22oGBSYtqYUXGA"), "Data\\Skyrim - Textures4.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures4.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/22oGBSYtqYUXGA"), "Data\\Skyrim - Textures4.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures5.bsa") == true && new FileInfo("Data\\Skyrim - Textures5.bsa").Length != 809121183)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/CE5pZnfDBdfrkQ"), "Data\\Skyrim - Textures5.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures5.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/CE5pZnfDBdfrkQ"), "Data\\Skyrim - Textures5.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures6.bsa") == true && new FileInfo("Data\\Skyrim - Textures6.bsa").Length != 107211187)
+            {
+                FileInfo Del = new FileInfo("Data\\Skyrim - Textures6.bsa");
+                Del.Delete();
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/MJmIpJapYI58dw"), "Data\\Skyrim - Textures6.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures6.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/MJmIpJapYI58dw"), "Data\\Skyrim - Textures6.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures7.bsa") == true && new FileInfo("Data\\Skyrim - Textures7.bsa").Length != 700733354)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/DtR9ilNB-CCF1Q"), "Data\\Skyrim - Textures7.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures7.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/DtR9ilNB-CCF1Q"), "Data\\Skyrim - Textures7.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Textures78.bsa") == true && new FileInfo("Data\\Skyrim - Textures8.bsa").Length != 214496000)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/Ds5YSFyEsv0TcQ"), "Data\\Skyrim - Textures8.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Textures8.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/Ds5YSFyEsv0TcQ"), "Data\\Skyrim - Textures8.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Voices_en0.bsa") == true && new FileInfo("Data\\Skyrim - Voices_en0.bsa").Length != 1807969854)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/iAKOlNzRHTb7Tg"), "Data\\Skyrim - Voices_en0.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Voices_en0.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/iAKOlNzRHTb7Tg"), "Data\\Skyrim - Voices_en0.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim - Voices_ru0.bsa") == true && new FileInfo("Data\\Skyrim - Voices_ru0.bsa").Length != 2033032883)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/61VGGjdDvEHNAw"), "Data\\Skyrim - Voices_ru0.bsa");
+            }
+            else if (File.Exists("Data\\Skyrim - Voices_ru0.bsa") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/61VGGjdDvEHNAw"), "Data\\Skyrim - Voices_ru0.bsa");
+            }
+
+            if (File.Exists("Data\\Skyrim.esm") == true && new FileInfo("Data\\Skyrim.esm").Length != 249753351)
+            {
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/NfbZjqWtqnLxJQ"), "Data\\Skyrim.esm");
+            }
+            else if (File.Exists("Data\\Skyrim.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/NfbZjqWtqnLxJQ"), "Data\\Skyrim.esm");
+            }
+
+            if (File.Exists("Data\\Update.esm") == true && new FileInfo("Data\\Update.esm").Length != 18857707)
+            {
+                FileInfo Del = new FileInfo("Data\\Update.esm");
+                Del.Delete();
+
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/LPdtdosIovZu7g"), "Data\\Update.esm");
+            }
+            else if (File.Exists("Data\\Update.esm") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/LPdtdosIovZu7g"), "Data\\Update.esm");
+            }
+
+            if (File.Exists("Skyrim\\Skyrim.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/CQ6sOrufF2erkw"), "Skyrim\\Skyrim.ini");
+            }
+
+            if (File.Exists("Skyrim\\SkyrimPrefs.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/i/4pzQOvHe-AGdIw"), "Skyrim\\SkyrimPrefs.ini");
+            }
+
+            if (File.Exists("bink2w64.dll") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/09DQ5YzaUj_nSA"), "bink2w64.dll");
+            }
+
+            if (File.Exists("High.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/i/RpV9ba9A6rQoHQ"), "High.ini");
+            }
+
+            if (File.Exists("installscript.vdf") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/BOIJyFnw_QWZsQ"), "installscript.vdf");
+            }
+
+            if (File.Exists("Low.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/i/2vA51-b1Rhh5Rg"), "Low.ini");
+            }
+
+            if (File.Exists("Medium.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/i/kW-aVmL4Aa0IbA"), "Medium.ini");
+            }
+
+            if (File.Exists("Skyrim.ccc") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/948WJQi0C9crvA"), "Skyrim.ccc");
+            }
+
+            if (File.Exists("Skyrim_Default.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/i/G9LdInrOPut_Jw"), "Skyrim_Default.ini");
+            }
+
+            if (File.Exists("Ultra.ini") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/hcuFO4mdAaQqzQ"), "Ultra.ini");
+            }
+
+            if (File.Exists("SkyrimSELauncher.exe") != true)
+            {
+                ClientFIle++;
+                dict.Add(new Uri("https://www.dropbox.com/scl/fi/dkge1g0c32elnaky89d9b/SkyrimSELauncher.exe?rlkey=o8gcvlo459vj9n4r5la22yo2t&dl=1"), "SkyrimSELauncher.exe");
+            }
+
+            if (File.Exists("SkyrimSE.exe") != true || FileVersionInfo.GetVersionInfo("SkyrimSE.exe").FileVersion != "1.6.640.0")
+            {
+                if (File.Exists("SkyrimSE.exe") == true && FileVersionInfo.GetVersionInfo("SkyrimSE.exe").FileVersion != "1.6.640.0")
+                {
+                    FileInfo Del = new FileInfo("SkyrimSE.exe");
+                    Del.Delete();
+                }
+
+                ClientFIle++;
+                dict.Add(new Uri("https://www.dropbox.com/scl/fi/snuy0wlex0zk1eunywjem/SkyrimSE.exe?rlkey=su7mmawjcxaenbezwf6kzcdi4&dl=1"), "SkyrimSE.exe");
+
+                ClientFIle++;
+                dict.Add(new Uri("https://www.dropbox.com/scl/fi/omxu1mgprswim25x0jxls/steam_emu.ini?rlkey=bdj1rczmq7y90uy2bx1i21dqy&dl=1"), "steam_emu.ini");
+
+                ClientFIle++;
+                dict.Add(new Uri("https://www.dropbox.com/scl/fi/wrkabvemg7lqdysgv9hz9/steam_api64.dll?rlkey=ynvuqdjob8pbwwfqmmxroi0sp&dl=1"), "steam_api64.dll");
+
+                ClientFIle++;
+                dict.Add(new Uri("https://www.dropbox.com/scl/fi/6t2cw5w2btwrm2ndla0q9/steam_api64.cdx?rlkey=8zdf3eso4j0id1cbbpyh6bi14&dl=1"), "steam_api64.cdx");
+            }
+
+            DownloadManyFilesClient(dict);
+
         }
 
         public async Task DownloadManyFilesClient(Dictionary<Uri, string> files)
         {
             WebClient wc1 = new WebClient();
+            wc1.DownloadProgressChanged += (s, e) => progressBar1.Value = e.ProgressPercentage;
+            int number = 0;
+
+            label6.Visible = true;
 
             foreach (KeyValuePair<Uri, string> pair in files)
             {
+
+                label6.Text = "Cкачено " + number++ + "/" + ClientFIle;
+
+                button1.Text = "Скачивается: " + pair.Value;
                 await wc1.DownloadFileTaskAsync(pair.Key, pair.Value);
+            }
+
+            wc1.Dispose();
+
+            label3.ForeColor = Color.White;
+            label3.Text = "Версия " + FileVersionInfo.GetVersionInfo("SkyrimSE.exe").FileVersion;
+
+            progressBar1.Enabled = false;
+            button1.Enabled = true;
+            progressBar1.Visible = false;
+            label4.Visible = true;
+            modManagerToolStripMenuItem.Enabled = true;
+
+            if (!File.Exists("Data\\CombatSettings.esp") && !File.Exists("Data\\SweetPie.esp"))
+            {
+                skyMPDownload();
             }
         }
 
+        int ServerFile;
 
-        public async Task DownloadManyFilesSkyMP(Dictionary<Uri, string> files)
+        private void skyMPDownload()
         {
-            WebClient wc1 = new WebClient();
+
+            progressBar1.Enabled = true;
+            button1.Enabled = false;
+            progressBar1.Visible = true;
+            label4.Visible = false;
+
+            Directory.CreateDirectory("Setup");
+
+            Dictionary<Uri, string> dict2 = new Dictionary<Uri, string>();
+
+            if (File.Exists("Setup\\SkyMP.z01") == true && new FileInfo("Setup\\SkyMP.z01").Length != 1073741824)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/kQIeDAuHWWa6EA"), "Setup\\SkyMP.z01");
+            }
+            else if (File.Exists("Setup\\SkyMP.z01") != true)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/kQIeDAuHWWa6EA"), "Setup\\SkyMP.z01");
+            }
+
+            if (File.Exists("Setup\\SkyMP.z02") == true && new FileInfo("Setup\\SkyMP.z02").Length != 1073741824)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/1EuxfnvfLgKAHg"), "Setup\\SkyMP.z02");
+            }
+            else if (File.Exists("Setup\\SkyMP.z02") != true)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/1EuxfnvfLgKAHg"), "Setup\\SkyMP.z02");
+            }
+
+            if (File.Exists("Setup\\SkyMP.z03") == true && new FileInfo("Setup\\SkyMP.z03").Length != 1073741824)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/w2T5uixjugp_YA"), "Setup\\SkyMP.z03");
+            }
+            else if (File.Exists("Setup\\SkyMP.z03") != true)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/w2T5uixjugp_YA"), "Setup\\SkyMP.z03");
+            }
+
+            if (File.Exists("Setup\\SkyMP.z04") == true && new FileInfo("Setup\\SkyMP.z04").Length != 1073741824)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/jP6pXMoCq5JJ_Q"), "Setup\\SkyMP.z04");
+            }
+            else if (File.Exists("Setup\\SkyMP.z04") != true)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/jP6pXMoCq5JJ_Q"), "Setup\\SkyMP.z04");
+            }
+
+            if (File.Exists("Setup\\SkyMP.zip") == true && new FileInfo("Setup\\SkyMP.zip").Length != 760353068)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/932d8xrJ5b6Zfg"), "Setup\\SkyMP.zip");
+            }
+            else if (File.Exists("Setup\\SkyMP.zip") != true)
+            {
+                ServerFile++;
+                dict2.Add(new Uri("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/932d8xrJ5b6Zfg"), "Setup\\SkyMP.zip");
+            }
+            DownloadManyFilesSkymp(dict2);
+        }
+
+        public async Task DownloadManyFilesSkymp(Dictionary<Uri, string> files)
+        {
+            WebClient wc2 = new WebClient();
+            wc2.DownloadProgressChanged += (s, e) => progressBar1.Value = e.ProgressPercentage;
+            int number = 0;
+
+            label6.Visible = true;
 
             foreach (KeyValuePair<Uri, string> pair in files)
             {
-                await wc1.DownloadFileTaskAsync(pair.Key, pair.Value);
+                label6.Text = "Cкачено " + (number++) + "/" + ServerFile;
+
+                button1.Text = "Скачивается: " + pair.Value;
+                await wc2.DownloadFileTaskAsync(pair.Key, pair.Value);
+            }
+            wc2.Dispose();
+
+            button1.Enabled = false;
+            progressBar1.Visible = true;
+            label6.Visible = true;
+            label4.Visible = false;
+
+            Control.CheckForIllegalCrossThreadCalls = false;
+
+            Thread thread = new Thread(() =>
+            {
+
+                using (ZipFile zip = ZipFile.Read("Setup\\SkyMP.zip"))
+                {
+
+                    zip.ExtractProgress += new EventHandler<ExtractProgressEventArgs>(Zip_ExtractProgress);
+
+                    int n1 = 0;
+
+                    foreach (ZipEntry entry in zip)
+                    {
+                        label6.Text = n1++ + "/" + zip.Count;
+                        button1.Text = "Распаковка: " + entry.FileName;
+                        entry.Extract(ExtractExistingFileAction.OverwriteSilently);
+
+                    }
+
+                    progressBar1.Visible = false;
+                    button1.Enabled = false;
+                    button1.Text = "Установлено";
+                    label4.Visible = true;
+                    Start.Enabled = true;
+                    label6.Visible = false;
+                    modManagerToolStripMenuItem.Enabled = true;
+
+                    label4.Text = "SkyMP установлен";
+
+                    checkCashToolStripMenuItem.Enabled = true;
+                    GraphiscResolutionToolStripMenuItem.Enabled = true;
+
+                    var Setting = new IniFile("Setting.ini");
+                    string ProfileEnableCheck = Setting.Read("ProfileEnable", "Setting");
+                }
+            });
+            thread.Start();
+        }
+
+        void Zip_ExtractProgress(object sender, ExtractProgressEventArgs e)
+        {
+            if (e.TotalBytesToTransfer > 0)
+            {
+                progressBar1.Value = Convert.ToInt32(100 * e.BytesTransferred / e.TotalBytesToTransfer);
+
             }
         }
 
-        private void skyrimToolStripMenuItem_Click(object sender, EventArgs e)
+        Form modManagerForm = new Form4();
+
+        private void modManagerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            File.Delete("cache\\fastresume\\B70F00172B021159D7294139326C12DFA3724799.fresume");
-            File.Delete("cache\\metadata\\B70F00172B021159D7294139326C12DFA3724799.torrent");
-
-            TorrentDownloadClient();
+            modManagerForm.Show();
         }
-
-        private TorrentManager torrentManagerCheckeds;
-
-        private async void TorrentCheckeds()
-        {
-
-            MagnetLink magnetLink1 = MagnetLink.Parse("magnet:?xt=urn:btih:b70f00172b021159d7294139326c12dfa3724799&dn=Data");
-            MagnetLink magnetLink2 = MagnetLink.Parse("magnet:?xt=urn:btih:6cef0c07e0fe31c31328bc78791853f4108c1105&dn=Data");
-
-            EngineSettings engineSettings = new EngineSettings();
-            ClientEngine engine = new ClientEngine(engineSettings);
-
-            torrentManagerCheckeds = await engine.AddAsync(magnetLink1, "");
-            torrentManagerCheckeds = await engine.AddAsync(magnetLink2, "");
-
-            torrentManagerCheckeds.StartAsync();
-        }
-
     }
+
 }
